@@ -1,34 +1,59 @@
-import cv2
-import numpy as np
+from PIL import Image
 
-def swap_pixels(image, x1, y1, x2, y2):
-    # Swap pixel values at (x1, y1) and (x2, y2)
-    image[x1, y1], image[x2, y2] = image[x2, y2], image[x1, y1]
+def encrypt_image(image_path):
+    # Open the image
+    img = Image.open(image_path)
+    width, height = img.size
 
-def encrypt_image(image, key=10):
-    # Add a fixed value (key) to each pixel
-    encrypted_image = np.clip(image.astype(int) + key, 0, 255).astype(np.uint8)
-    return encrypted_image
+    # Encrypt the image by swapping pixel values
+    for x in range(width):
+        for y in range(height):
+            pixel = img.getpixel((x, y))
+            new_pixel = (pixel[2], pixel[0], pixel[1])  # Swap R, G, B values
+            img.putpixel((x, y), new_pixel)
 
-def decrypt_image(encrypted_image, key=10):
-    # Subtract the same value (key) from each pixel
-    decrypted_image = np.clip(encrypted_image.astype(int) - key, 0, 255).astype(np.uint8)
-    return decrypted_image
+    # Save the encrypted image
+    encrypted_path = image_path.split('.')[0] + '_encrypted.png'
+    img.save(encrypted_path)
+    print("Image encrypted successfully!")
+    return encrypted_path
 
-# Load an image (replace 'your_image.jpg' with the actual image file)
-original_image = cv2.imread('your_image.jpg')
+def decrypt_image(encrypted_image_path):
+    # Open the encrypted image
+    img = Image.open(encrypted_image_path)
+    width, height = img.size
 
-# Example: Swap pixels at (100, 200) and (300, 400)
-swap_pixels(original_image, 100, 200, 300, 400)
+    # Decrypt the image by reversing the encryption process
+    for x in range(width):
+        for y in range(height):
+            pixel = img.getpixel((x, y))
+            new_pixel = (pixel[1], pixel[2], pixel[0])  # Reverse swapping
+            img.putpixel((x, y), new_pixel)
 
-# Encrypt the image
-encrypted_image = encrypt_image(original_image)
+    # Save the decrypted image
+    decrypted_path = encrypted_image_path.split('_encrypted')[0] + '_decrypted.png'
+    img.save(decrypted_path)
+    print("Image decrypted successfully!")
+    return decrypted_path
 
-# Decrypt the encrypted image
-decrypted_image = decrypt_image(encrypted_image)
+def main():
+    while True:
+        choice = input("Do you want to encrypt or decrypt an image? (E/D): ").strip().upper()
+        if choice == "E":
+            image_path = input("Enter the path to the image you want to encrypt: ")
+            encrypted_image_path = encrypt_image(image_path)
+            print("Encrypted image saved at:", encrypted_image_path)
+        elif choice == "D":
+            encrypted_image_path = input("Enter the path to the encrypted image: ")
+            decrypted_image_path = decrypt_image(encrypted_image_path)
+            print("Decrypted image saved at:", decrypted_image_path)
+        else:
+            print("Invalid choice. Please try again.")
+            continue
 
-# Save the results (replace 'encrypted.jpg' and 'decrypted.jpg' with desired filenames)
-cv2.imwrite('encrypted.jpg', encrypted_image)
-cv2.imwrite('decrypted.jpg', decrypted_image)
+        cont = input("Do you want to continue? (Y/N): ").strip().upper()
+        if cont != "Y":
+            break
 
-print("Image encryption and decryption completed.")
+if __name__ == "__main__":
+    main()
